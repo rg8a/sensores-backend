@@ -12,3 +12,4 @@ yarn-error.log*
 # Archivos de directorio de producción
 dist/
 build/
+.env
