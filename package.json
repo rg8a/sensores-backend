@@ -8,10 +8,15 @@
     "dev": "node index.js",
     "start": "node index.js"
   },
-  "keywords": ["sensors", "backend", "nodejs"],
+  "keywords": [
+    "sensors",
+    "backend",
+    "nodejs"
+  ],
   "author": "rg8a",
   "license": "ISC",
   "dependencies": {
+    "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.21.1",
     "mysql2": "^3.11.4"
