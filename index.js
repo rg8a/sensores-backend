@@ -47,6 +47,22 @@ app.post('/sensor_datos', (req, res) => {
   });
 });
 
+// Endpoint para obtener los datos del sensor
+app.get('/sensor_datos', (req, res) => {
+    // Query para seleccionar todos los registros de la tabla
+    const query = 'SELECT * FROM registros_sensor6 ORDER BY tiempo_registro DESC';
+    
+    db.query(query, (err, results) => {
+      if (err) {
+        console.error('Error al obtener los datos:', err);
+        res.status(500).json({ error: 'Error al obtener los datos' });
+      } else {
+        res.status(200).json(results); // Enviar los datos al frontend en formato JSON
+      }
+    });
+  });
+  
+
 // Iniciar el servidor
 app.listen(port, () => {
   console.log(`Servidor escuchando en http://localhost:${port}`);
