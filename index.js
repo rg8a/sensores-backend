@@ -3,10 +3,12 @@ const express = require('express');
 const mysql = require('mysql2');
 
 const app = express();
+const cors = require('cors');
 const port = process.env.PORT || 3000;
 
 app.use(express.urlencoded({ extended: true })); // Añadir esto
 app.use(express.json()); // Parsear JSON
+app.use(cors());
 
 // Configuración de la conexión a la base de datos
 const db = mysql.createConnection({
