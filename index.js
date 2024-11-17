@@ -1,14 +1,20 @@
 require('dotenv').config();
 const express = require('express');
 const mysql = require('mysql2');
+const dayjs = require('dayjs');
+const utc = require('dayjs/plugin/utc');
+const timezone = require('dayjs/plugin/timezone');
+
 
 const app = express();
 const cors = require('cors');
 const port = process.env.PORT || 3000;
 
-app.use(express.urlencoded({ extended: true })); // Añadir esto
-app.use(express.json()); // Parsear JSON
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 app.use(cors());
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 // Configuración de la conexión a la base de datos
 const db = mysql.createConnection({
@@ -35,18 +41,18 @@ app.get('/', (req, res) => {
 
 // Endpoint para registrar los datos del sensor
 app.post('/sensor_datos', (req, res) => {
-  const { ldr, modo_operacion } = req.body;
+    const { ldr, modo_operacion } = req.body;
+    const localTime = dayjs().tz('America/Mexico_City').format('YYYY-MM-DD HH:mm:ss');
 
-  // Query para insertar los datos en la tabla correspondiente
-  const query = `INSERT INTO registros_sensor6 (valor_fotoresistor, tiempo_registro, modo_operacion) VALUES (?, NOW(), ?)`;
-  db.query(query, [ldr, modo_operacion], (err, results) => {
-    if (err) {
-      console.error('Error al insertar los datos:', err);
-      res.status(500).json({ error: 'Error al insertar los datos' });
-    } else {
-      res.status(200).json({ message: 'Datos insertados exitosamente' });
-    }
-  });
+    const query = `INSERT INTO registros_sensor6 (valor_fotoresistor, tiempo_registro, modo_operacion) VALUES (?, ?, ?)`;
+    db.query(query, [ldr, localTime, modo_operacion], (err, results) => {
+        if (err) {
+            console.error('Error al insertar los datos:', err);
+            res.status(500).json({ error: 'Error al insertar los datos' });
+        } else {
+            res.status(200).json({ message: 'Datos insertados exitosamente' });
+        }
+    });
 });
 
 // Endpoint para obtener los datos del sensor
@@ -62,8 +68,7 @@ app.get('/sensor_datos', (req, res) => {
         res.status(200).json(results); // Enviar los datos al frontend en formato JSON
       }
     });
-  });
-  
+  }); 
 
 // Iniciar el servidor
 app.listen(port, () => {
