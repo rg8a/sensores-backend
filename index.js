@@ -5,7 +5,6 @@ const dayjs = require('dayjs');
 const utc = require('dayjs/plugin/utc');
 const timezone = require('dayjs/plugin/timezone');
 
-
 const app = express();
 const cors = require('cors');
 const port = process.env.PORT || 3000;
@@ -23,6 +22,7 @@ const db = mysql.createConnection({
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
   port: process.env.DB_PORT,
+  timezone: 'Z',
 });
 
 // Conectar a la base de datos
@@ -41,34 +41,40 @@ app.get('/', (req, res) => {
 
 // Endpoint para registrar los datos del sensor
 app.post('/sensor_datos', (req, res) => {
-    const { ldr, modo_operacion } = req.body;
-    const localTime = dayjs().tz('America/Mexico_City').format('YYYY-MM-DD HH:mm:ss');
+  const { ldr, modo_operacion } = req.body;
+  // Almacena la hora en UTC
+  const utcTime = dayjs().utc().format('YYYY-MM-DD HH:mm:ss');
 
-    const query = `INSERT INTO registros_sensor6 (valor_fotoresistor, tiempo_registro, modo_operacion) VALUES (?, ?, ?)`;
-    db.query(query, [ldr, localTime, modo_operacion], (err, results) => {
-        if (err) {
-            console.error('Error al insertar los datos:', err);
-            res.status(500).json({ error: 'Error al insertar los datos' });
-        } else {
-            res.status(200).json({ message: 'Datos insertados exitosamente' });
-        }
-    });
+  const query = `INSERT INTO registros_sensor6 (valor_fotoresistor, tiempo_registro, modo_operacion) VALUES (?, ?, ?)`;
+  db.query(query, [ldr, utcTime, modo_operacion], (err, results) => {
+    if (err) {
+      console.error('Error al insertar los datos:', err);
+      res.status(500).json({ error: 'Error al insertar los datos' });
+    } else {
+      res.status(200).json({ message: 'Datos insertados exitosamente' });
+    }
+  });
 });
 
 // Endpoint para obtener los datos del sensor
 app.get('/sensor_datos', (req, res) => {
-    // Query para seleccionar todos los registros de la tabla
-    const query = 'SELECT * FROM registros_sensor6 ORDER BY tiempo_registro DESC';
-    
-    db.query(query, (err, results) => {
-      if (err) {
-        console.error('Error al obtener los datos:', err);
-        res.status(500).json({ error: 'Error al obtener los datos' });
-      } else {
-        res.status(200).json(results); // Enviar los datos al frontend en formato JSON
-      }
-    });
-  }); 
+  // Query para seleccionar todos los registros de la tabla
+  const query = 'SELECT * FROM registros_sensor6 ORDER BY tiempo_registro DESC';
+
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error('Error al obtener los datos:', err);
+      res.status(500).json({ error: 'Error al obtener los datos' });
+    } else {
+      // Convierte los tiempos UTC a hora local
+      const formattedResults = results.map((record) => ({
+        ...record,
+        tiempo_registro: dayjs.utc(record.tiempo_registro).tz('America/Mexico_City').format('YYYY-MM-DD HH:mm:ss'),
+      }));
+      res.status(200).json(formattedResults); // Enviar los datos con formato local
+    }
+  });
+});
 
 // Iniciar el servidor
 app.listen(port, () => {
