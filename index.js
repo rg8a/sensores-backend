@@ -45,16 +45,32 @@ app.post('/sensor_datos', (req, res) => {
   // Almacena la hora en UTC
   const utcTime = dayjs().utc().format('YYYY-MM-DD HH:mm:ss');
 
-  const query = `INSERT INTO registros_sensor6 (valor_fotoresistor, tiempo_registro, modo_operacion) VALUES (?, ?, ?)`;
-  db.query(query, [ldr, utcTime, modo_operacion], (err, results) => {
-    if (err) {
-      console.error('Error al insertar los datos:', err);
-      res.status(500).json({ error: 'Error al insertar los datos' });
-    } else {
-      res.status(200).json({ message: 'Datos insertados exitosamente' });
+  // Query para insertar en registros_sensor6
+  const query1 = `INSERT INTO registros_sensor6 (valor_fotoresistor, tiempo_registro, modo_operacion) VALUES (?, ?, ?)`;
+  
+  // Query para insertar en registro_actuador2
+  const query2 = `INSERT INTO registro_actuador2 (intensidad, tiempo_registro) VALUES (?, ?)`;
+
+  // Ejecutar ambas consultas
+  db.query(query1, [ldr, utcTime, modo_operacion], (err1, results1) => {
+    if (err1) {
+      console.error('Error al insertar en registros_sensor6:', err1);
+      res.status(500).json({ error: 'Error al insertar en registros_sensor6' });
+      return;
     }
+
+    db.query(query2, [modo_operacion, utcTime], (err2, results2) => {
+      if (err2) {
+        console.error('Error al insertar en registro_actuador2:', err2);
+        res.status(500).json({ error: 'Error al insertar en registro_actuador2' });
+        return;
+      }
+
+      res.status(200).json({ message: 'Datos insertados exitosamente en ambas tablas' });
+    });
   });
 });
+
 
 // Endpoint para obtener los datos del sensor
 app.get('/sensor_datos', (req, res) => {
